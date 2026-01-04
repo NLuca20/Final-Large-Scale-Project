@@ -281,8 +281,86 @@ ORDER BY total_popularity DESC;
 
 <img width="1445" height="279" alt="image" src="https://github.com/user-attachments/assets/64f7f04a-bbbe-4ed2-bea8-eb4546bee340" />
 
+* The "main" category is overwhelmingly the most popular, with a total popularity score of 1,932 and customers are willing to accept higher caloric counts for their primary meal, as the "main" category also carry the highest average calories at approximately 364 kcal (what seems very little, probably due to some data quality issue)
+* Desserts are significantly more popular than appetizers, despite desserts having a higher average caloric density. This suggests that when customers deviate from a main course, they are more likely to choose a higher-calorie sweet treat over a lighter starter
+* Appetizers are currently the least popular category. They also have the lowest average calories, so the owners could try introducing more "indulgent" appetizers to see if increasing the caloric density would drive higher engagement in this segment
 
 ## Re-upload
-## Second insight
-## Limitations
+As goal was to create a data pipeline that is capable analysing an updated version of the menu and analysing further sales. 
+1) Reuploading the current menu to the `current-menu-ys39h3` bucket with the same name but changed menu items
 
+<img width="1571" height="391" alt="image" src="https://github.com/user-attachments/assets/0bb1b0ee-47df-4b1f-9fa6-ead1b0b65573" />
+
+2) Our Lambda function will automaticly regeneret the enriched bucket with the new wnriched data
+
+<img width="1568" height="405" alt="image" src="https://github.com/user-attachments/assets/9fe0a4dc-499c-4072-a0ac-9fd3e274b617" />
+
+3) I uploaded the the december sales to the `internal-sales-ys39h3` bucket
+
+<img width="1569" height="393" alt="image" src="https://github.com/user-attachments/assets/f3ac8c3e-25f3-4dcc-8987-3f9cfd517eaf" />
+
+4) Re-run both of the crawlers
+
+<img width="1587" height="319" alt="image" src="https://github.com/user-attachments/assets/9b76efb5-fc51-4111-8dbb-c47242631c14" />
+
+5) Now we can run some queries in Athena on this month's sales data, enriched with the information of the new menu items
+
+## Second insight
+1) Joining the tables again for easier queriing
+```
+CREATE TABLE "restaurant_data"."second_menu_analytics_table"
+WITH (
+     format = 'PARQUET',
+     external_location = 's3://business-insights-ys39h3/joined_data_second/'
+) AS 
+SELECT s.*, m.calories, m.cuisine, m.healthScore, m.diets
+FROM "restaurant_data"."internal_sales_ys39h3" s
+JOIN "restaurant_data"."enriched_menu_ys39h3" m 
+  ON s.dish_id = m.dish_id;
+```
+2) Profit per dish
+```
+SELECT 
+    s.dish_name, 
+    round(SUM(s.revenue)) AS total_revenue,
+    SUM(s.units_sold) AS total_units,
+    round(SUM(m.priceperserving * s.units_sold)) AS total_cost,
+    round((SUM(s.revenue) - SUM(m.priceperserving * s.units_sold))) AS total_profit
+FROM "restaurant_data"."second_menu_analytics_table" AS s
+JOIN "restaurant_data"."enriched_menu_ys39h3" AS m 
+    ON s.dish_id = m.dish_id
+GROUP BY s.dish_name
+ORDER BY total_profit DESC;
+```
+
+<img width="1445" height="625" alt="image" src="https://github.com/user-attachments/assets/aaba891a-26e5-4d49-b1d0-9105c160d5f2" />
+
+* We can clearly see that non of the dishes generate loss
+* And especialy the new fish dish, the *Salmon Quinoa Risotto* is clearly was a good addition to the menu, but the other new dishes are performing moderatly well too in terms of generating profit
+
+3) Dish category popularity
+```
+SELECT 
+    category, SUM(units_sold) AS total_popularity
+FROM "restaurant_data"."second_menu_analytics_table"
+GROUP BY category
+ORDER BY total_popularity DESC;
+```
+
+<img width="1430" height="268" alt="image" src="https://github.com/user-attachments/assets/644dd7ac-2151-41e8-8216-3c9a7f760d9b" />
+
+* Even with the better performing new appetizer the people not prefer to order appetizers, they much reather order a dessert at the end of the meal
+* It could be good to test with different menus that people wants more/different options of appetizers or just not that open for it generaly, than keeping few not that costly appetizer otpions can be a good way to go
+
+4) Continuing the analyzis further
+* The second version can be of course further analysed but it is clearly visible how can different insights and information help the owners figure out the proper menu
+* These steps can be repeted multiple times with bigger and smaller changes of the menu or the prices of the items on it
+* It could be insightful to add new data to the enriched-menu so new insight could be drawn from it 
+
+
+## Limitations
+This project have multiple limitations and some anomaies that could be an issue in a real life inplementation: 
+* Nameing convention: In the way I used the API needs the dish names to perfectly match with the ones the API find on different food websites, so the restaurant can't get creative with the name
+* Data validity and realism: I took the data that the API found valid and didn't fact checked it, for example one of the dish per serving costs more than 1000, as there is no mesurment I took it as $ value but probably it is either a mistake or not in that measurment in reality
+* API limitation: with the free version I couldn't make a larger scale menu as I wouldn't be able to finish both round of API calls in one day but with a larger scale menu it can be an issue too
+* It does not account for multiple questions: Like storage length of different ingredients generating waste therefor loss or different times of the year like holidays, summer, seasonal items
