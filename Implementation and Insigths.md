@@ -189,6 +189,97 @@ Now I have 3 tables for the analitics
 <img width="408" height="141" alt="image" src="https://github.com/user-attachments/assets/91854914-232f-42fd-a12b-931190abc100" />
 
 ## First insights 
+1) Revenue by Dish
+Wanted to see if there any dis that is prices too low or even the revenue does not cover the cost of it.
+```
+SELECT 
+    f.dish_name, 
+    round(SUM(f.revenue)) AS total_revenue,
+    SUM(f.units_sold) AS total_units,
+    round(SUM(m.priceperserving * f.units_sold)) AS total_cost,
+    round((SUM(f.revenue) - SUM(m.priceperserving * f.units_sold))) AS total_profit
+FROM "restaurant_data"."final_analytics_table" AS f 
+JOIN "restaurant_data"."enriched_menu_ys39h3" AS m 
+    ON f.dish_id = m.dish_id
+GROUP BY f.dish_name
+ORDER BY total_profit DESC;
+```
+<img width="1432" height="619" alt="image" src="https://github.com/user-attachments/assets/6877d240-1088-4863-bc0e-8de4819c1c76" />
+
+From this query we can get multiple conclusions:
+* *Grilled Chuck Burgers* and the *Pork Menudo* are the best performing dishes both in total unite sold (352 and 401) but they have the highest profit too (14136.0 and 23767.0), so keeping these on the menu is a grat strategy for the business
+* On the other hand the *Cilantro Lime Halibut* and the *Fish Pie With Fresh and Smoked Salmon* is really not profitable dishes as both have a grat loss probabaly due to the high ingredients costs, as even with the disent unit sold (168 and 214) on this price it really not wort it to have it on the menu with negative profit. And as the loss is high seemingly the price increase wont solve the issue. Both fish dishes so it would help profit to find similar dishes with much ceaper ingredients for the future.
+* *Whole Wheat Dinner Rolls* has a high profit margin (86.6%), but it has the lowest total revenue (1,007). Because the price is low (37.31) and volume is very low (27 units) too, it contributes almost nothing. It might be useful to consider choosing a more popular appetizer insted of this one.
+
+2) Revenue by Cousine
+I wanted to identify which cuisine type is the biggest money-maker. It helps the owners decide which styles of food to feature more prominently on their menu.
+```
+SELECT 
+    cuisine, 
+    SUM(revenue) AS total_revenue,
+    SUM(units_sold) AS total_units
+FROM "restaurant_data"."final_analytics_table"
+GROUP BY cuisine
+ORDER BY total_revenue DESC;
+```
+<img width="1450" height="314" alt="image" src="https://github.com/user-attachments/assets/2e63038f-2392-4b71-b796-241d7f6926d5" />
+
+From this query we can get some important conclusions:
+* It is clearly identifiable Mediterranean cuisine is driving the highest gross income, so the owners should consider expanding that section of the mediterran dishes or advertise the other type dishes in a promotion to drive sales there too
+
+3) Top Selling Healthy Dishes
+By looking for dishes with a high healthscore, the owner can see if the health-conscious options are actually selling than the indulgent items
+```
+SELECT 
+    dish_name, 
+    healthscore, 
+    SUM(units_sold) AS total_units_sold, 
+    SUM(revenue) AS total_revenue
+FROM "restaurant_data"."final_analytics_table"
+WHERE healthscore > 50
+GROUP BY dish_name, healthscore
+ORDER BY total_units_sold DESC
+LIMIT 10;
+```
+<img width="1439" height="320" alt="image" src="https://github.com/user-attachments/assets/d6d7326a-7dea-4d6b-a4c0-0bbb0d5453d0" />
+
+* *Fish Pie With Fresh and Smoked Salmon* is the leading healthy dish, with a health score of 80.0 and the highest sales volume at 214 units, but as we earlier established it has a big loss. For the next menu needs a similarly healthy dish that makes profit 
+* *Slow Cooker Beef Stew* achieved a perfect health score of 100.0 while maintaining very high popularity with 213 units sold, might indicating customers do not feel they are sacrificing flavor for health with this item, so the healthy items have a place on the menu too
+* *Corn Avocado Salsa* scores significantly lower suggesting that customers are more willing to spend on healthy "main" dishes than healthy "appetizers"
+
+4) Sales Volume by Dietary Requirement
+This query groups sales by the diets strings, it allows the owners to see the demand for specific dietary needs like "vegan" or "gluten-free"
+```
+SELECT 
+    diets, 
+    SUM(units_sold) AS total_units_sold
+FROM "restaurant_data"."final_analytics_table"
+WHERE diets != ''
+GROUP BY diets
+ORDER BY total_units_sold DESC;
+```
+
+<img width="1432" height="508" alt="image" src="https://github.com/user-attachments/assets/b20155a5-e093-44dd-b032-5198f00f62bb" />
+
+Some insights from the query:
+* Dishes labeled as both "gluten free, dairy free" are clearly the most popular with 614 units sold
+* The second most popular category involves a broad range of restrictions (gluten free, dairy free, paleolithic, lacto ovo vegetarian, primal, whole 30, and vegan), this suggests the customers heavily favor dishes that cater to multiple dietary needs
+* Gluten-Free Prioritysation as every single one of your top six selling dietary categories includes "gluten free" as a standard. This indicates that gluten-free compatibility is a critical driver for the sales volume
+* Since the combination of "gluten free, dairy free" is your top seller, the ovners should ensure these are clearly marked on the physical menuso they can further boost sales
+
+5) Average Calories per Category vs. Popularity
+This query helps understand the nutritional profile of the different categories (appetizers, mains, desserts) and if customers prefer lower-calorie or higher-calorie options in those groups
+```
+SELECT 
+    category, 
+    AVG(calories) AS avg_calories, 
+    SUM(units_sold) AS total_popularity
+FROM "restaurant_data"."final_analytics_table"
+GROUP BY category
+ORDER BY total_popularity DESC;
+```
+
+<img width="1445" height="279" alt="image" src="https://github.com/user-attachments/assets/64f7f04a-bbbe-4ed2-bea8-eb4546bee340" />
 
 
 ## Re-upload
