@@ -5,9 +5,14 @@ By building the data pipeline and runing queries on the enriched data the owners
 ## The stakehoalders 
 The Imagine Restaurant opened it's gates in 2025.09.01. as a family business with a base manu built by the family from their own favourit and traditional dishes with little to no strategy. During until November lot of people visited the restaurant but some left unsatisfied as the menu was not perfectly to their likeing or didn't have dishes to their diatery preferences. 
 
-<img src="https://github.com/user-attachments/assets/b8c284d8-4f7c-4564-97ea-ac9f571404ad" width="300">
+<img width="400" alt="First-menu" src="https://github.com/user-attachments/assets/f17c4f3c-75d6-49de-ba8e-387cd8d6309c" />
 
-At the end of November the ownes decided to change the menu but they wanted to change it in a datadriven way and build a datapipelin so future changes to the menu will aoutomaticly update and they can repate it to the everchanging preferences and trends to the eating habits of the people. 
+At the end of November the ownes decided to change the menu but they wanted to change it in a datadriven way and build a datapipelin so future changes to the menu will automaticly update and they can repate it to the everchanging preferences and trends to the eating habits of the people. 
+
+After the initial set up and insights they come up with the new menu for december and they perform some analyses on that too 
+
+<img width="400"  alt="Second-menu" src="https://github.com/user-attachments/assets/2f16bf4f-a592-464b-9672-bf404ab2b30e" />
+
 ## Valuas and goals
 **Dish Performance Insights**
 * Which dishes sell well despite high calories 
