@@ -16,13 +16,13 @@ After the initial set up and insights they come up with the new menu for decembe
 ## Valuas and goals
 **Dish Performance Insights**
 * Which dishes sell well despite high calories 
-* Which nutrient-balanced dishes are under-promoted
-* Which dishes match current dietary preferences
+* Which high-margin dishes are also meeting dietary trends
+* Which dishes have high caloric density but low sales volume
 
 **Menu Expansion Insights**
 * Identify missing menu categories
+* Which dietary niches are currently underserved
 * Identify missing diatery variances of popular dishes
 
-**Optimization Insights**
-* Remove low-performing dishes with low nutritional value
+
 
