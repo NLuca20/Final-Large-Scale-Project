@@ -1,9 +1,12 @@
 # Implementation
 ## Set up 
-### Check IAM roles
+1) Check IAM roles
+In the Learner Lab environment I can use the LabRole IAM role for everything I need
+<img width="1579" height="67" alt="image" src="https://github.com/user-attachments/assets/3f680ee8-bb59-4512-8d5f-63ec87a59a8d" />
 
-### Set up S3 buckets
-1) Created 3 buckets for three different puruses:
+
+2) Set up S3 buckets
+Created 3 buckets for three different puruses:
 * The `current-menu-ys39h3` holding the uploaded CSV data in Parquet format of the current menu items
 * The `internal-sales-ys39h3` holding the uploaded CSV data in Parquet format of the historical sales data
 * The `enriched-menu-ys39h3` endpoint of the lambda function with the detaled menu items
@@ -12,12 +15,12 @@
 
 I added my cusman ID to the names to make sure the name of the buckets are unique in the system
 
-2) Creating the Lambda function to enrich the current menu items from the spoonacular API
+3) Creating the Lambda function to enrich the current menu items from the spoonacular API
 * I named the function `SpoonacularEnrichment`
 * I set the Runtime to Python 3.14
 * I set the Execution role to LabRole
 * Writhe the Python code to the Code source part
-```import json
+```
 import json
 import requests
 import boto3
@@ -42,56 +45,49 @@ def lambda_handler(event, context):
     for index, row in df.iterrows():
         dish_name = row['dish_name']
         
-        search_params = {
-            "query": dish_name, 
-            "addRecipeNutrition": "true", 
-            "addRecipeInformation": "true", 
-            "number": 1, 
-            "apiKey": API_KEY
+        # Initialize enriched fields with default "Not Found" values
+        recipe_data = {
+            "calories": None, "fat": None, "carbohydrates": None, "protein": None,
+            "healthScore": None, "pricePerServing": None, "vegetarian": None,
+            "vegan": None, "glutenFree": None, "dairyFree": None, "diets": "",
+            "cuisine": "Unknown"
         }
         
+        # 1. Consolidated Search
+        search_params = {"query": dish_name, "addRecipeNutrition": "true", "addRecipeInformation": "true", "number": 1, "apiKey": API_KEY}
         search_resp = requests.get(f"{BASE_URL}/complexSearch", params=search_params)
         
-        if search_resp.status_code != 200:
-            print(f"Search failed for {dish_name}: {search_resp.status_code}")
-            continue
-            
-        search_results = search_resp.json().get('results')
-        if not search_results:
-            continue
-            
-        recipe = search_results[0]
-        
-        nutrients_list = recipe.get('nutrition', {}).get('nutrients', [])
-        nutrients = {n['name']: n['amount'] for n in nutrients_list}
+        if search_resp.status_code == 200:
+            results = search_resp.json().get('results')
+            if results:
+                recipe = results[0]
+                nutrients_list = recipe.get('nutrition', {}).get('nutrients', [])
+                nutrients = {n['name']: n['amount'] for n in nutrients_list}
+                
+                recipe_data.update({
+                    "calories": nutrients.get("Calories"),
+                    "fat": nutrients.get("Fat"),
+                    "carbohydrates": nutrients.get("Carbohydrates"),
+                    "protein": nutrients.get("Protein"),
+                    "healthScore": recipe.get("healthScore"),
+                    "pricePerServing": recipe.get("pricePerServing"),
+                    "vegetarian": recipe.get("vegetarian"),
+                    "vegan": recipe.get("vegan"),
+                    "glutenFree": recipe.get("glutenFree"),
+                    "dairyFree": recipe.get("dairyFree"),
+                    "diets": ", ".join(recipe.get("diets", []))
+                })
 
-        cuisine_params = {"apiKey": API_KEY}
-        cuisine_data = {"title": dish_name}
-        cuisine_resp = requests.post(f"{BASE_URL}/cuisine", params=cuisine_params, data=cuisine_data)
-        cuisine_res = cuisine_resp.json() if cuisine_resp.status_code == 200 else {"cuisine": "Unknown"}
-
-        raw_diets = recipe.get("diets", [])
-        if raw_diets and isinstance(raw_diets[0], dict):
-            diet_string = ", ".join([d.get('element', '') for d in raw_diets])
-        else:
-            diet_string = ", ".join(raw_diets)
+        cuisine_params = {"apiKey": API_KEY, "title": dish_name}
+        cuisine_resp = requests.post(f"{BASE_URL}/cuisine", params={"apiKey": API_KEY}, data={"title": dish_name})
+        if cuisine_resp.status_code == 200:
+            recipe_data["cuisine"] = cuisine_resp.json().get("cuisine", "Unknown")
 
         enriched_item = {
             "dish_id": row.get('dish_id'),
             "dish_name": dish_name,
             "course": row.get('course'),
-            "calories": nutrients.get("Calories"),
-            "fat": nutrients.get("Fat"),
-            "carbohydrates": nutrients.get("Carbohydrates"),
-            "protein": nutrients.get("Protein"),
-            "healthScore": recipe.get("healthScore"),
-            "pricePerServing": recipe.get("pricePerServing"),
-            "vegetarian": recipe.get("vegetarian"),
-            "vegan": recipe.get("vegan"),
-            "glutenFree": recipe.get("glutenFree"),
-            "dairyFree": recipe.get("dairyFree"),
-            "diets": diet_string,
-            "cuisine": cuisine_res.get("cuisine", "Unknown")
+            **recipe_data 
         }
         enriched_data.append(enriched_item)
     if enriched_data:
@@ -109,7 +105,7 @@ def lambda_handler(event, context):
 
 * I added my API key as an environment variable
 
-<img width="1899" height="393" alt="image" src="https://github.com/user-attachments/assets/a721e28d-bff6-4b98-b8a2-281d3143c3c3" />
+<img width="1509" height="239" alt="image" src="https://github.com/user-attachments/assets/9cdb4f6f-8344-4452-8b88-5c9bc5da21eb" />
 
 * I edited the General Configuaration to give more time out
 
@@ -119,11 +115,11 @@ def lambda_handler(event, context):
 
 <img width="1540" height="484" alt="image" src="https://github.com/user-attachments/assets/964109e8-2f28-4078-8f73-cc2c557763fd" />
 
-3) Upload the Current Menu data to the `current-menu-ys39h3` bucket
+4) Upload the Current Menu data to the `current-menu-ys39h3` bucket
 
 <img width="1548" height="415" alt="image" src="https://github.com/user-attachments/assets/c3299222-aa80-49d9-b0cf-4c8b78ce68b5" />
 
-4) The enriched data automaticly loades to the `enriched-menu-ys39h3` bucket
+5) The enriched data automaticly loades to the `enriched-menu-ys39h3` bucket
 
 <img width="1551" height="439" alt="image" src="https://github.com/user-attachments/assets/7b15d0a2-2cd8-431b-a45a-63a91fc0b516" />
 
@@ -131,11 +127,11 @@ def lambda_handler(event, context):
 
 <img width="1487" height="551" alt="image" src="https://github.com/user-attachments/assets/8b98d7b1-cb3a-4fbd-9ed5-9730a2b728ae" />
 
-5) Upload the sales historical data to the `internal-sales-ys39h3` bucket
+6) Upload the sales historical data to the `internal-sales-ys39h3` bucket
 
 <img width="1889" height="411" alt="image" src="https://github.com/user-attachments/assets/ec8eb8bb-51cd-411d-9bdb-e3da9639ad6b" />
 
-6) Use AWS Glue crawler to join all the data 
+7) Use AWS Glue crawler to join all the data 
 * I created a crawler for the `internal-sales-ys39h3` bucket
 * I set a new `restaurant-data table` as the output place
 
@@ -151,7 +147,7 @@ def lambda_handler(event, context):
 
 <img width="1575" height="241" alt="image" src="https://github.com/user-attachments/assets/ddf591f1-4617-46ef-96e6-331eab2e1f3f" />
 
-7) Before analysing the insights I set up a new bucket for the query output at set it up in AWS Athena as `business-insights-ys39h3` and run an easy query with join to see if everything works properly
+8) Before analysing the insights I set up a new bucket for the query output at set it up in AWS Athena as `business-insights-ys39h3` and run an easy query with join to see if everything works properly
 
 <img width="1206" height="203" alt="image" src="https://github.com/user-attachments/assets/024836cd-de5e-4afe-af9b-09205057b891" />
 
@@ -172,7 +168,7 @@ JOIN "restaurant_data"."enriched_menu_ys39h3" m
 
 Here we can see that we are able to pull data from the two seperet table for more precise business insights
 
-8) Lastly I created a joint table for easier analetics in Athena
+9) Lastly I created a joint table for easier analetics in Athena
 ```
 CREATE TABLE "restaurant_data"."final_analytics_table"
 WITH (
