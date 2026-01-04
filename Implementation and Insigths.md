@@ -1,4 +1,4 @@
-# Implementation
+[Test-query.csv](https://github.com/user-attachments/files/24421335/Test-query.csv)# Implementation
 ## Set up 
 ### Check IAM roles
 
@@ -127,12 +127,50 @@ def lambda_handler(event, context):
 
 <img width="1551" height="439" alt="image" src="https://github.com/user-attachments/assets/7b15d0a2-2cd8-431b-a45a-63a91fc0b516" />
 
+* I checked the format so I can see that everything is fine 
+
+<img width="1487" height="551" alt="image" src="https://github.com/user-attachments/assets/8b98d7b1-cb3a-4fbd-9ed5-9730a2b728ae" />
+
 5) Upload the sales historical data to the `internal-sales-ys39h3` bucket
 
 <img width="1889" height="411" alt="image" src="https://github.com/user-attachments/assets/ec8eb8bb-51cd-411d-9bdb-e3da9639ad6b" />
 
 6) Use AWS Glue crawler to join all the data 
+* I created a crawler for the `internal-sales-ys39h3` bucket
+* I set a new `restaurant-data table` as the output place
 
+<img width="1236" height="662" alt="image" src="https://github.com/user-attachments/assets/ef0a6e6d-b7ed-4002-9718-4c1e62bea7ef" />
+
+* And a crawler for the `enriched-menu-ys39h3` bucket
+
+<img width="1239" height="666" alt="image" src="https://github.com/user-attachments/assets/3734b797-f9e2-4318-a75b-9919085b4d8c" />
+
+* I run both crawler and it created two tables
+
+<img width="1575" height="400" alt="image" src="https://github.com/user-attachments/assets/eac83175-7720-4311-8d60-4d89fd74dfff" />
+
+<img width="1575" height="241" alt="image" src="https://github.com/user-attachments/assets/ddf591f1-4617-46ef-96e6-331eab2e1f3f" />
+
+7) Before analysing the insights I set up a new bucket for the query output at set it up in AWS Athena as `business-insights-ys39h3` and run an easy query with join to see if everything works properly
+
+<img width="1206" height="203" alt="image" src="https://github.com/user-attachments/assets/024836cd-de5e-4afe-af9b-09205057b891" />
+
+```
+SELECT 
+    s.date, 
+    m.dish_name, 
+    m.calories, 
+    m.cuisine, 
+    m.pricePerServing
+FROM "restaurant_data"."internal_sales_ys39h3" s
+JOIN "restaurant_data"."enriched_menu_ys39h3" m 
+  ON s.dish_id = m.dish_id;
+```
+<img width="1414" height="602" alt="image" src="https://github.com/user-attachments/assets/8d6989e0-0a92-410e-8f79-c9798c7b47fb" />
+
+[Test-query.csv](https://github.com/user-attachments/files/24421340/Test-query.csv)
+
+Here we can see that we are able to pull data from the two seperet table for more precise business insights
 
 ## First insights 
 ## Re-upload
