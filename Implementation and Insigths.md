@@ -1,4 +1,4 @@
-[Test-query.csv](https://github.com/user-attachments/files/24421335/Test-query.csv)# Implementation
+# Implementation
 ## Set up 
 ### Check IAM roles
 
@@ -172,7 +172,25 @@ JOIN "restaurant_data"."enriched_menu_ys39h3" m
 
 Here we can see that we are able to pull data from the two seperet table for more precise business insights
 
+8) Lastly I created a joint table for easier analetics in Athena
+```
+CREATE TABLE "restaurant_data"."final_analytics_table"
+WITH (
+     format = 'PARQUET',
+     external_location = 's3://business-insights-ys39h3/joined_data/'
+) AS 
+SELECT s.*, m.calories, m.cuisine, m.healthScore, m.diets
+FROM "restaurant_data"."internal_sales_ys39h3" s
+JOIN "restaurant_data"."enriched_menu_ys39h3" m 
+  ON s.dish_id = m.dish_id;
+```
+Now I have 3 tables for the analitics 
+
+<img width="408" height="141" alt="image" src="https://github.com/user-attachments/assets/91854914-232f-42fd-a12b-931190abc100" />
+
 ## First insights 
+
+
 ## Re-upload
 ## Second insight
 ## Limitations
