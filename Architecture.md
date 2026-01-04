@@ -14,8 +14,11 @@ This API provides multiple meaningful insightes of the given recipies trought a 
 
 It provides insights on: 
 * Nutritional value
+* Price per Serving
 * Dietary belonging
 * Cousine
+
+
 ## Architecture
 <img width="1026" height="494" alt="image" src="https://github.com/user-attachments/assets/a50c4250-c14d-4fa0-ae56-452f4ffe06ea" />
 
