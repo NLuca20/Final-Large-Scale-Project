@@ -185,7 +185,28 @@ Now I have 3 tables for the analitics
 <img width="408" height="141" alt="image" src="https://github.com/user-attachments/assets/91854914-232f-42fd-a12b-931190abc100" />
 
 ## First insights 
-1) Revenue by Dish
+1) Basice insights
+* Total profit
+```
+select 
+round((SUM(s.revenue) - SUM(m.priceperserving * s.units_sold))) AS total_profit 
+FROM enriched_menu_ys39h3 as m join internal_sales_ys39h3 as s on m.dish_id = s.dish_id
+```
+<img width="385" height="219" alt="image" src="https://github.com/user-attachments/assets/16c22aa7-a622-4813-be07-34d06c5c63da" />
+
+Curently the restaurant is really not profitable and somthing needs to be changed 
+
+* Total selled items
+```
+SELECT 
+SUM(units_sold)
+FROM internal_sales_ys39h3
+```
+<img width="315" height="202" alt="image" src="https://github.com/user-attachments/assets/479134de-8129-4dd3-8151-aa8339439157" />
+
+They had pretty good amount of items sold so probably the issue is in the menu and the priceing
+
+2) Revenue by Dish
 Wanted to see if there any dis that is prices too low or even the revenue does not cover the cost of it.
 ```
 SELECT 
@@ -203,11 +224,12 @@ ORDER BY total_profit DESC;
 <img width="1432" height="619" alt="image" src="https://github.com/user-attachments/assets/6877d240-1088-4863-bc0e-8de4819c1c76" />
 
 From this query we can get multiple conclusions:
-* *Grilled Chuck Burgers* and the *Pork Menudo* are the best performing dishes both in total unite sold (352 and 401) but they have the highest profit too (14136.0 and 23767.0), so keeping these on the menu is a grat strategy for the business
-* On the other hand the *Cilantro Lime Halibut* and the *Fish Pie With Fresh and Smoked Salmon* is really not profitable dishes as both have a grat loss probabaly due to the high ingredients costs, as even with the disent unit sold (168 and 214) on this price it really not wort it to have it on the menu with negative profit. And as the loss is high seemingly the price increase wont solve the issue. Both fish dishes so it would help profit to find similar dishes with much ceaper ingredients for the future.
+* *Grilled Chuck Burgers* and the *Pork Menudo* are the best performing dishes both in total unite sold (352 and 401) and they have the highest profit too (14136.0 and 23767.0), so keeping these on the menu is a grat strategy for the business
+* On the other hand the *Cilantro Lime Halibut* and the *Fish Pie With Fresh and Smoked Salmon* is really not profitable dishes as both have a great loss probabaly due to the high ingredients costs, as even with the disent unit sold (168 and 214) on this price it really not wort it to have it on the menu with negative profit. And as the loss is high seemingly the price increase wont solve the issue. Both fish dishes so it would help profit to find similar dishes with much ceaper ingredients for the future.
 * *Whole Wheat Dinner Rolls* has a high profit margin (86.6%), but it has the lowest total revenue (1,007). Because the price is low (37.31) and volume is very low (27 units) too, it contributes almost nothing. It might be useful to consider choosing a more popular appetizer insted of this one.
 
-2) Revenue by Cousine
+3) Revenue by Cousine
+
 I wanted to identify which cuisine type is the biggest money-maker. It helps the owners decide which styles of food to feature more prominently on their menu.
 ```
 SELECT 
@@ -223,7 +245,8 @@ ORDER BY total_revenue DESC;
 From this query we can get some important conclusions:
 * It is clearly identifiable Mediterranean cuisine is driving the highest gross income, so the owners should consider expanding that section of the mediterran dishes or advertise the other type dishes in a promotion to drive sales there too
 
-3) Top Selling Healthy Dishes
+4) Top Selling Healthy Dishes
+
 By looking for dishes with a high healthscore, the owner can see if the health-conscious options are actually selling than the indulgent items
 ```
 SELECT 
@@ -243,7 +266,7 @@ LIMIT 10;
 * *Slow Cooker Beef Stew* achieved a perfect health score of 100.0 while maintaining very high popularity with 213 units sold, might indicating customers do not feel they are sacrificing flavor for health with this item, so the healthy items have a place on the menu too
 * *Corn Avocado Salsa* scores significantly lower suggesting that customers are more willing to spend on healthy "main" dishes than healthy "appetizers"
 
-4) Sales Volume by Dietary Requirement
+5) Sales Volume by Dietary Requirement
 This query groups sales by the diets strings, it allows the owners to see the demand for specific dietary needs like "vegan" or "gluten-free"
 ```
 SELECT 
@@ -263,7 +286,7 @@ Some insights from the query:
 * Gluten-Free Prioritysation as every single one of your top six selling dietary categories includes "gluten free" as a standard. This indicates that gluten-free compatibility is a critical driver for the sales volume
 * Since the combination of "gluten free, dairy free" is your top seller, the ovners should ensure these are clearly marked on the physical menuso they can further boost sales
 
-5) Average Calories per Category vs. Popularity
+6) Average Calories per Category vs. Popularity
 This query helps understand the nutritional profile of the different categories (appetizers, mains, desserts) and if customers prefer lower-calorie or higher-calorie options in those groups
 ```
 SELECT 
@@ -302,7 +325,26 @@ As goal was to create a data pipeline that is capable analysing an updated versi
 5) Now we can run some queries in Athena on this month's sales data, enriched with the information of the new menu items
 
 ## Second insight
-1) Joining the tables again for easier queriing
+1) General insights
+* Total profit
+```
+SELECT 
+round((SUM(s.revenue) - SUM(m.priceperserving * s.units_sold))) AS total_profit 
+FROM enriched_menu_ys39h3 as m join internal_sales_ys39h3 as s on m.dish_id = s.dish_id
+```
+<img width="410" height="214" alt="image" src="https://github.com/user-attachments/assets/ef187bfc-fa41-4d75-9ac7-3b8bd9cda272" />
+
+The restaurant not in loss anymore 
+* All Sales Volume
+```
+SELECT 
+SUM(units_sold)
+FROM internal_sales_ys39h3
+```
+<img width="310" height="218" alt="image" src="https://github.com/user-attachments/assets/61a0b16d-3593-4657-a6fe-9ec46569a8a6" />
+
+The sales dropped a bit in December as in the previous two months it was 2801 and in this one month it is just 1037 less than the expected half of it. The customers might was a bit scared of the changes so it is not wise to change it too often.
+2) Joining the tables again for easier quering
 ```
 CREATE TABLE "restaurant_data"."second_menu_analytics_table"
 WITH (
@@ -314,7 +356,7 @@ FROM "restaurant_data"."internal_sales_ys39h3" s
 JOIN "restaurant_data"."enriched_menu_ys39h3" m 
   ON s.dish_id = m.dish_id;
 ```
-2) Profit per dish
+3) Profit per dish
 ```
 SELECT 
     s.dish_name, 
@@ -334,7 +376,7 @@ ORDER BY total_profit DESC;
 * We can clearly see that non of the dishes generate loss
 * And especialy the new fish dish, the *Salmon Quinoa Risotto* is clearly was a good addition to the menu, but the other new dishes are performing moderatly well too in terms of generating profit
 
-3) Dish category popularity
+4) Dish category popularity
 ```
 SELECT 
     category, SUM(units_sold) AS total_popularity
@@ -348,7 +390,7 @@ ORDER BY total_popularity DESC;
 * Even with the better performing new appetizer the people not prefer to order appetizers, they much reather order a dessert at the end of the meal
 * It could be good to test with different menus that people wants more/different options of appetizers or just not that open for it generaly, than keeping few not that costly appetizer otpions can be a good way to go
 
-4) Continuing the analyzis further
+5) Continuing the analyzis further
 * The second version can be of course further analysed but it is clearly visible how can different insights and information help the owners figure out the proper menu
 * These steps can be repeted multiple times with bigger and smaller changes of the menu or the prices of the items on it
 * It could be insightful to add new data to the enriched-menu so new insight could be drawn from it 
